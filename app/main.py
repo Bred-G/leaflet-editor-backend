@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1 import api_router
+from app.services.template_service import template_service
+from app.core.database import AsyncSessionLocal
 
 app = FastAPI(
     title="Leaflet Editor API",
@@ -30,5 +32,12 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+# Инициализация предустановленных шаблонов при старте
+@app.on_event("startup")
+async def startup_event():
+    async with AsyncSessionLocal() as db:
+        count = await template_service.initialize_preset_templates(db)
+        print(f"Initialized {count} preset templates")
 
 app.include_router(api_router, prefix="/api/v1")
