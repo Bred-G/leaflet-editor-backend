@@ -12,11 +12,6 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 # Создание нового проекта
 @router.post("/", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
 async def create_project(project: ProjectCreate, db: AsyncSession = Depends(get_db)):
-    # Если размеры страницы не переданы, извлекаем из XML
-    page_width = project.page_width
-    page_height = project.page_height
-    if page_width is None or page_height is None:
-        page_width, page_height = flyer_service.get_page_size(project.xml_content)
     # Создаем объект модели
     db_project = Project(name=project.name, xml_content=project.xml_content, page_width=project.page_width, page_height=project.page_height)
     db.add(db_project)
