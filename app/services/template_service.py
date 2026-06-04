@@ -108,8 +108,7 @@ class TemplateService:
     async def get_templates(db: AsyncSession, user_id: Optional[int] = None, category: Optional[str] = None, tags: Optional[List[str]] = None, include_preset: bool = True, skip: int = 0, limit: int = 50) -> tuple[List[Template], int]:
         conditions = []
         if include_preset:
-            if user_id is not None:
-                conditions.append(Template.user_id == user_id)
+            conditions.append(or_(Template.user_id == user_id, Template.user_id.is_(None)))
             if category:
                 conditions.append(Template.category == category)
             if tags:
@@ -117,16 +116,13 @@ class TemplateService:
                 for tag in tags:
                     conditions.append(Template.tags.contains([tag]))
         else:
-            if user_id is not None:
-                conditions.append(and_(Template.user_id == user_id, Template.user_id.isnot(None)))
+            conditions.append(Template.user_id == user_id)
             if category:
                 conditions.append(and_(Template.category == category, Template.user_id.isnot(None)))
             if tags:
                 # Поиск по тегам
                 for tag in tags:
                     conditions.append(and_(Template.tags.contains([tag]), Template.user_id.isnot(None)))
-            if not conditions:
-                conditions.append(Template.user_id.isnot(None))
         query = select(Template).where(and_(*conditions) if conditions else True)
         # Подсчет общего количества
         count_query = select(func.count()).select_from(Template).where(and_(*conditions) if conditions else True)
