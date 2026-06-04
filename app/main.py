@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1 import api_router
+from app.api.v1.endpoints import auth
 from app.services.template_service import template_service
 from app.core.database import AsyncSessionLocal
 
@@ -41,3 +42,4 @@ async def startup_event():
         print(f"Initialized {count} preset templates")
 
 app.include_router(api_router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1")
