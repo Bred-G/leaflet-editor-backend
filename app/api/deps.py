@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.core.security import decode_access_token
 from app.models.user import User
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 # Получить текущего пользователя по JWT токену
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: AsyncSession = Depends(get_db)) -> User:
