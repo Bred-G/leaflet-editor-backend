@@ -108,7 +108,10 @@ class TemplateService:
     async def get_templates(db: AsyncSession, user_id: Optional[int] = None, category: Optional[str] = None, tags: Optional[List[str]] = None, include_preset: bool = True, skip: int = 0, limit: int = 50) -> tuple[List[Template], int]:
         conditions = []
         if include_preset:
-            conditions.append(or_(Template.user_id == user_id, Template.user_id.is_(None)))
+            if user_id is not None:
+                conditions.append(or_(Template.user_id == user_id, Template.user_id.is_(None)))
+            else:
+                conditions.append(Template.user_id.is_(None))
             if category:
                 conditions.append(Template.category == category)
             if tags:
@@ -116,7 +119,8 @@ class TemplateService:
                 for tag in tags:
                     conditions.append(Template.tags.contains([tag]))
         else:
-            conditions.append(Template.user_id == user_id)
+            if user_id is not None:
+                conditions.append(Template.user_id == user_id)
             if category:
                 conditions.append(and_(Template.category == category, Template.user_id.isnot(None)))
             if tags:
@@ -145,6 +149,12 @@ class TemplateService:
     @staticmethod
     async def create_template(db: AsyncSession, template_data: TemplateCreate, user_id: Optional[int] = None) -> Template:
         from app.models.template import Template
+        from sqlalchemy import select
+        if user_id is not None:
+            result = await db.execute(select(Template).where(Template.user_id == user_id, Template.name == template_data.name))
+            existing = result.scalar_one_or_none()
+            if existing:
+                raise ValueError(f"Template with name '{template_data.name}' already exists")
         template = Template(name=template_data.name, xml_content=template_data.xml_content, user_id=user_id, category=template_data.category, tags=template_data.tags, preview_url=template_data.preview_url, is_preset=False, usage_count=0)
         db.add(template)
         await db.commit()
