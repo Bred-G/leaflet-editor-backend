@@ -46,8 +46,11 @@ async def get_template(template_id: int, increment_usage: bool = Query(True, des
 # Создание нового шаблона
 @router.post("/", response_model=TemplateResponse, status_code=status.HTTP_201_CREATED)
 async def create_template(template: TemplateCreate, current_user: Optional[User] = Depends(get_current_user_optional), db: AsyncSession = Depends(get_db)):
-    new_template = await template_service.create_template(db=db, template_data=template, user_id=current_user.id if current_user else None)
-    return new_template
+    try:
+        new_template = await template_service.create_template(db=db, template_data=template, user_id=current_user.id if current_user else None)
+        return new_template
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 # Обновление шаблонов
 @router.put("/{template_id}", response_model=TemplateResponse)
